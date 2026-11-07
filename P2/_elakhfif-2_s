@@ -1,0 +1,30 @@
+#!/bin/sh
+# Device : routeur_elakhfif-2
+# Part   : P2, VXLAN in STATIC mode
+#
+# Idea: VXLAN puts the Ethernet frames of host_elakhfif-2 inside normal UDP packets,
+# so that both hosts feel plugged into the same switch, even though routers
+# stand between them. In static mode the other router's address is written here.
+
+# Remove any previous setup, so this file can switch between _s and _g.
+ip link del vxlan10 2>/dev/null
+ip link del br0 2>/dev/null
+
+# Underlay: the real network linking the two routers.
+ip addr flush dev eth0
+ip addr add 10.1.1.2/24 dev eth0
+ip link set eth0 up
+
+# br0 is a small virtual switch living inside the router.
+ip link add br0 type bridge
+ip link set br0 up
+
+# vxlan10 is the tunnel. id 10 is its number (the VNI), 4789 the standard UDP
+# port. remote is the static part: we name the other end by hand.
+ip link add vxlan10 type vxlan id 10 local 10.1.1.2 remote 10.1.1.1 dstport 4789 dev eth0
+ip link set vxlan10 up
+
+# Plug the tunnel and the host cable into the virtual switch.
+ip link set vxlan10 master br0
+ip link set eth1 master br0
+ip link set eth1 up

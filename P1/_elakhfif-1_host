@@ -1,0 +1,7 @@
+#!/bin/sh
+# Device : host_elakhfif-1 (a computer)
+# Part   : P1, GNS3 and Docker work together
+#
+# Nothing to configure on purpose: P1 only proves the host image starts in GNS3
+# and that we can open its console. The subject forbids default IP addresses.
+echo "host_elakhfif-1 is up, without any IP address."

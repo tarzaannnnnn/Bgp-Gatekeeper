@@ -1,0 +1,43 @@
+#!/bin/sh
+# Device : _elakhfif-1, the Route Reflector (RR), the "controller" of the datacenter
+# Part   : P3, BGP EVPN
+#
+# Routers do not all talk to each other. Each one talks only to this RR, which
+# repeats what it hears to the others. It is like a group chat instead of
+# everybody calling everybody. This RR carries no host traffic itself.
+
+# Addresses of the three links, and lo, the router's permanent identity.
+ip addr add 10.1.1.1/30 dev eth0
+ip addr add 10.1.1.5/30 dev eth1
+ip addr add 10.1.1.9/30 dev eth2
+ip addr add 1.1.1.1/32 dev lo
+ip link set eth0 up
+ip link set eth1 up
+ip link set eth2 up
+
+cat > /tmp/frr-startup.conf <<EOF
+! OSPF: every router learns how to reach every other router.
+router ospf
+ ospf router-id 1.1.1.1
+ network 0.0.0.0/0 area 0
+!
+! The image starts with a neutral BGP process: replace it by ours.
+no router bgp 65000
+!
+! iBGP inside AS 1. "listen range" is the dynamic part: any router with an
+! address in 1.1.1.0/29 may connect, so no leaf has to be listed here.
+router bgp 1
+ bgp router-id 1.1.1.1
+ neighbor leafs peer-group
+ neighbor leafs remote-as 1
+ neighbor leafs update-source lo
+ bgp listen range 1.1.1.0/29 peer-group leafs
+ !
+ ! EVPN is the extension of BGP that carries MAC addresses.
+ address-family l2vpn evpn
+  neighbor leafs activate
+  neighbor leafs route-reflector-client
+ exit-address-family
+!
+EOF
+vtysh -f /tmp/frr-startup.conf

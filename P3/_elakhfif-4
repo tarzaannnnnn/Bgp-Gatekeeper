@@ -1,0 +1,50 @@
+#!/bin/sh
+# Device : _elakhfif-4, a leaf, also called a VTEP (the end of a VXLAN tunnel)
+# Part   : P3, BGP EVPN
+#
+# Unlike P2, this router uses no remote and no group. It tells the RR through
+# BGP which MAC addresses it sees, and learns from the RR where the others are.
+
+# Address towards the RR, and lo, the router's permanent identity.
+ip addr add 10.1.1.10/30 dev eth2
+ip addr add 1.1.1.4/32 dev lo
+ip link set eth2 up
+
+# br0 is a small virtual switch living inside the router.
+ip link add br0 type bridge
+ip link set br0 up
+
+# vxlan10 is the tunnel. nolearning means: do not guess where MACs are from the
+# traffic, because BGP EVPN now provides that information.
+ip link add vxlan10 type vxlan id 10 local 1.1.1.4 dstport 4789 nolearning
+ip link set vxlan10 up
+
+# Plug the tunnel and the host cable into the virtual switch.
+ip link set vxlan10 master br0
+ip link set eth0 master br0
+ip link set eth0 up
+
+cat > /tmp/frr-startup.conf <<EOF
+! OSPF: announces our link and our lo, so that all routers can reach each other.
+router ospf
+ ospf router-id 1.1.1.4
+ network 10.1.1.10/30 area 0
+ network 1.1.1.4/32 area 0
+!
+! The image starts with a neutral BGP process: replace it by ours.
+no router bgp 65000
+!
+! iBGP inside AS 1: we only need to know the RR.
+router bgp 1
+ bgp router-id 1.1.1.4
+ neighbor 1.1.1.1 remote-as 1
+ neighbor 1.1.1.1 update-source lo
+ !
+ ! advertise-all-vni: publish our VXLAN 10 and every MAC seen in it.
+ address-family l2vpn evpn
+  neighbor 1.1.1.1 activate
+  advertise-all-vni
+ exit-address-family
+!
+EOF
+vtysh -f /tmp/frr-startup.conf

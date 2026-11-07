@@ -1,0 +1,29 @@
+#!/bin/sh
+# Device : routeur_elakhfif-1
+# Part   : P2, VXLAN in DYNAMIC MULTICAST mode
+#
+# Same network as the _s file, with one change: instead of naming the other
+# router, both routers join the group 239.1.1.1. A message sent to a group
+# reaches all its members, so routers find each other without being listed.
+
+# Remove any previous setup, so this file can switch between _s and _g.
+ip link del vxlan10 2>/dev/null
+ip link del br0 2>/dev/null
+
+# Underlay: the real network linking the two routers.
+ip addr flush dev eth0
+ip addr add 10.1.1.1/24 dev eth0
+ip link set eth0 up
+
+# br0 is a small virtual switch living inside the router.
+ip link add br0 type bridge
+ip link set br0 up
+
+# vxlan10 is the tunnel, id 10 is its number (the VNI). group replaces remote.
+ip link add vxlan10 type vxlan id 10 group 239.1.1.1 dstport 4789 dev eth0
+ip link set vxlan10 up
+
+# Plug the tunnel and the host cable into the virtual switch.
+ip link set vxlan10 master br0
+ip link set eth1 master br0
+ip link set eth1 up

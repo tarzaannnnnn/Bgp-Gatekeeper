@@ -1,0 +1,11 @@
+#!/bin/sh
+# Device : host_elakhfif-1
+# Part   : P2, VXLAN
+#
+# A computer with one address. Both hosts are in 30.1.1.0/24, so they believe
+# they share one local network. The tunnel makes that true.
+# mtu 1450: VXLAN adds 50 bytes around each packet, and links carry 1500 at most.
+ip addr flush dev eth1
+ip addr add 30.1.1.1/24 dev eth1
+ip link set eth1 mtu 1450
+ip link set eth1 up

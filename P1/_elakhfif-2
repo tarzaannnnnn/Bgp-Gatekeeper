@@ -1,0 +1,8 @@
+#!/bin/sh
+# Device : routeur_elakhfif (a router)
+# Part   : P1, GNS3 and Docker work together
+#
+# The services come from the image and its default config: zebra (the routing
+# table), bgpd, ospfd and isisd. No IP address is set, as the subject asks.
+# To check it in the GNS3 console:  ps   then   vtysh -c "show running-config"
+echo "routeur_elakhfif is up, without any IP address."
