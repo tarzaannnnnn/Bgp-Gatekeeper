@@ -102,12 +102,12 @@ vtysh -c "show running-config"     # bgp, ospf and isis are configured
 
 ## P2: VXLAN
 
-| Device | Port | Address |
-|---|---|---|
+|        Device        |                   Port                   |    Address    |
+|----------------------|------------------------------------------|---------------|
 | `routeur_elakhfif-1` | `eth0` to the switch, `eth1` to its host | `10.1.1.1/24` |
 | `routeur_elakhfif-2` | `eth0` to the switch, `eth1` to its host | `10.1.1.2/24` |
-| `host_elakhfif-1` | `eth1` | `30.1.1.1/24` |
-| `host_elakhfif-2` | `eth1` | `30.1.1.2/24` |
+| `host_elakhfif-1`    | `eth1`                                   | `30.1.1.1/24` |
+| `host_elakhfif-2`    | `eth1`                                   | `30.1.1.2/24` |
 
 The project starts in multicast mode. To switch mode, use `make p2-static` and
 `make p2-group`, or run the matching file on each router. `_s` is static, `_g`
@@ -139,12 +139,12 @@ packets go directly between `10.1.1.1` and `10.1.1.2`, inside `VXLAN, vni 10`.
 
 ## P3: BGP EVPN
 
-| Device | Role | Ports | Loopback | Host side |
-|---|---|---|---|---|
-| `_elakhfif-1` | Route reflector | `eth0`, `eth1`, `eth2` to the leafs | `1.1.1.1` | |
-| `_elakhfif-2` | Leaf | `eth0` to the RR, `eth1` to its host | `1.1.1.2` | `host_elakhfif-1`, `20.1.1.1` on `eth1` |
-| `_elakhfif-3` | Leaf | `eth1` to the RR, `eth0` to its host | `1.1.1.3` | `host_elakhfif-2`, `20.1.1.2` on `eth0` |
-| `_elakhfif-4` | Leaf | `eth2` to the RR, `eth0` to its host | `1.1.1.4` | `host_elakhfif-3`, `20.1.1.3` on `eth0` |
+|    Device     |     Role        |                Ports                 | Loopback  |             Host side                   |
+|---------------|-----------------|--------------------------------------|-----------|-----------------------------------------|
+| `_elakhfif-1` | Route reflector | `eth0`, `eth1`, `eth2` to the leafs  | `1.1.1.1` |                                         |
+| `_elakhfif-2` | Leaf            | `eth0` to the RR, `eth1` to its host | `1.1.1.2` | `host_elakhfif-1`, `20.1.1.1` on `eth1` |
+| `_elakhfif-3` | Leaf            | `eth1` to the RR, `eth0` to its host | `1.1.1.3` | `host_elakhfif-2`, `20.1.1.2` on `eth0` |
+| `_elakhfif-4` | Leaf            | `eth2` to the RR, `eth0` to its host | `1.1.1.4` | `host_elakhfif-3`, `20.1.1.3` on `eth0` |
 
 Links use `10.1.1.0/30`, `10.1.1.4/30` and `10.1.1.8/30`. All routers are in AS 1.
 The leafs only know the RR, and the RR accepts any peer in `1.1.1.0/29`, so its
@@ -152,12 +152,12 @@ sessions are dynamic: it shows them with a `*` in `show bgp l2vpn evpn summary`.
 
 OSPF and BGP need about a minute to settle after starting. On a leaf:
 
-| Command | Expected |
-|---|---|
-| `vtysh -c "show ip route"` | `O` routes to the three other loopbacks |
-| `vtysh -c "show bgp summary"` | One neighbour, `1.1.1.1` |
-| `vtysh -c "show bgp l2vpn evpn"` | `[3]`: one route per leaf. `[2]`: one per host MAC |
-| `vtysh -c "show evpn mac vni 10"` | Each MAC, `local` or `remote` with its leaf |
+|            Command                |                   Expected                         |
+|-----------------------------------|----------------------------------------------------|
+| `vtysh -c "show ip route"`        | `O` routes to the three other loopbacks            |
+| `vtysh -c "show bgp summary"`     | One neighbour, `1.1.1.1`                           |
+| `vtysh -c "show bgp l2vpn evpn"`  | `[3]`: one route per leaf. `[2]`: one per host MAC |
+| `vtysh -c "show evpn mac vni 10"` | Each MAC, `local` or `remote` with its leaf        |
 
 The hosts boot with no IP address, as the evaluation requires. A type 2 route
 is about a MAC, so it still appears: the IPv6 messages a host sends at startup
